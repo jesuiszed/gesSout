@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tableau de Bord Jury</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+        /* Style de base pour les boîtes de dialogue */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h2>Tableau de Bord Jury</h2>
+    <h1>Bienvenue, {{ user.username }}!</h1>
+    <p><a href="{% url 'authentification:logout' %}">Déconnexion</a></p>
+    <button id="btnAccount">Gérer Mon Compte</button>
+    <button id="btnPassword">Changer Mon Mot de Passe</button>
+</div>
+
+<div class="container">
+    <div class="main">
+        <h3>Soutenances à Évaluer</h3>
+        {% for soutenance in soutenances %}
+            <div>
+                <p>{{ soutenance.titre_these }} - {{ soutenance.date_heure }} - {{ soutenance.lieu }}</p>
+                {% if soutenance.id in soutenances_evaluees %}
+                    <button id="btnGestionEvaluation{{ soutenance.id }}">Gérer Évaluation</button>
+                {% else %}
+                    <button id="btnEvaluation{{ soutenance.id }}">Évaluer</button>
+                {% endif %}
+            </div>
+
+            <!-- Modale pour gérer/ajouter une évaluation -->
+            <div id="evaluationModal{{ soutenance.id }}" class="modal">
+                <div class="modal-content">
+                    <span class="close" id="closeEvaluation{{ soutenance.id }}">&times;</span>
+                    <h3>Évaluer la Soutenance "{{ soutenance.titre_these }}"</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="soutenance_id" value="{{ soutenance.id }}">
+                        {{ evaluation_form.as_p }}
+                        <button type="submit" name="evaluation_soutenance">Soumettre l'Évaluation</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="accountModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeAccount">&times;</span>
+            <h3>Gérer Mon Compte</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ user_form.as_p }}
+                {{ membre_jury_form.as_p }}
+                <button type="submit" name="update_profile">Enregistrer les Modifications</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closePassword">&times;</span>
+            <h3>Changer Mon Mot de Passe</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ password_form.as_p }}
+                <button type="submit" name="change_password">Changer le Mot de Passe</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var modals = document.querySelectorAll('.modal');
+    var btnsEvaluation = document.querySelectorAll('button[id^="btnEvaluation"]');
+    var btnsGestionEvaluation = document.querySelectorAll('button[id^="btnGestionEvaluation"]');
+    var spansClose = document.querySelectorAll('.close');
+
+    btnsEvaluation.forEach(function(btn) {
+        btn.onclick = function() {
+            var id = btn.id.replace('btnEvaluation', '');
+            var modal = document.getElementById('evaluationModal' + id);
+            if (modal) {
+                modal.style.display = "block";
+            }
+        }
+    });
+
+    btnsGestionEvaluation.forEach(function(btn) {
+        btn.onclick = function() {
+            var id = btn.id.replace('btnGestionEvaluation', '');
+            var modal = document.getElementById('evaluationModal' + id);
+            if (modal) {
+                modal.style.display = "block";
+            }
+        }
+    });
+
+    spansClose.forEach(function(span) {
+        span.onclick = function() {
+            modals.forEach(function(modal) {
+                modal.style.display = "none";
+            });
+        }
+    });
+
+    window.onclick = function(event) {
+        modals.forEach(function(modal) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        });
+    }
+</script>
+</body>
+</html>

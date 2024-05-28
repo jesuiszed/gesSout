@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tableau de bord du Directeur de Thèse</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+      <h1>Bienvenue sur votre tableau de bord, {{ user.username }}!</h1>
+        <p><a href="{% url 'authentification:logout' %}">Déconnexion</a></p>
+
+
+    <h2>Informations personnelles :</h2>
+    <button class="btnModal" data-modal="personal_info_modal">Mettre à jour les informations</button>
+</div>
+  
+
+    <div id="personal_info_modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="personal_info_modal">&times;</span>
+            <form method="post">
+                {% csrf_token %}
+                {{ directeur_form.as_p }}
+                <button type="submit">Mettre à jour</button>
+            </form>
+        </div>
+    </div>
+
+    
+
+    <h2>Étudiants encadrés :</h2>
+    <ul>
+        {% for etudiant in etudiants %}
+            <li>{{ etudiant.nom }} {{ etudiant.prenom }}</li>
+        {% empty %}
+            <li>Aucun étudiant encadré.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Soutenances associées :</h2>
+    <ul>
+        {% for soutenance in soutenances %}
+            <li>{{ soutenance.titre_these }} - {{ soutenance.date_heure }}</li>
+        {% empty %}
+            <li>Aucune soutenance trouvée.</li>
+        {% endfor %}
+    </ul>
+<h2>Changer le mot de passe</h2>
+    <button class="btnModal" data-modal="password_modal">Changer le mot de passe</button>
+
+    <div id="password_modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-modal="password_modal">&times;</span>
+            <form method="post">
+                {% csrf_token %}
+                {{ password_form.as_p }}
+                <button type="submit">Changer le mot de passe</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Fonction pour ouvrir une modale
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = "block";
+        }
+
+        // Fonction pour fermer une modale
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+        }
+
+        // Gestionnaire d'événement pour les boutons de modale
+        document.querySelectorAll('.btnModal').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var modalId = this.getAttribute('data-modal');
+                openModal(modalId);
+            });
+        });
+
+        // Gestionnaire d'événement pour les éléments de fermeture de modale
+        document.querySelectorAll('.close').forEach(function(span) {
+            span.addEventListener('click', function() {
+                var modalId = this.getAttribute('data-modal');
+                closeModal(modalId);
+            });
+        });
+
+        // Fermer les modales en cliquant en dehors du contenu
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
+            }
+        }
+    </script>
+</body>
+</html>

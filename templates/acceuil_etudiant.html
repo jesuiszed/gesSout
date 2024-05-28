@@ -1,0 +1,224 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tableau de Bord Étudiant</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+        /* Style de base pour les boîtes de dialogue */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h2>Tableau de Bord Étudiant</h2>
+    <h1>Bienvenue sur votre tableau de bord, {{ user.username }}!</h1>
+    <p><a href="{% url 'authentification:logout' %}">Déconnexion</a></p>
+    <button id="btnAccount">Gérer Mon Compte</button>
+    <button id="btnPassword">Changer Mon Mot de Passe</button>
+</div>
+
+<div class="container">
+    <div class="main">
+        <h3>Ma Thèse</h3>
+
+        {% if thesis %}
+            <p>Titre: {{ thesis.titre }}</p>
+            <p>Résumé: {{ thesis.resume }}</p>
+            <p>Date de soutenance: {{ thesis.date_soutenance }}</p>
+            <p>Directeur de thèse: {{ thesis.directeur_these.nom }}</p>
+            <p>Rapport: <a href="{{ thesis.rapport.url }}" t >Télécharger</a></p>
+            <p>Membres du jury: {% for membre in thesis.membres_jury.all %}{{ membre.nom }} {% endfor %}</p>
+            <h4>Commentaires:</h4>
+            {% for commentaire in thesis.commentaires.all %}
+                <p>{{ commentaire.texte }} - {{ commentaire.date_creation }}</p>
+            {% endfor %}
+        {% else %}
+            <p>Vous n'avez pas encore de thèse enregistrée.</p>
+        {% endif %}
+
+        <button id="btnThesis">Modifier Ma Thèse</button>
+        
+        {% if user.role == 'student' %}
+            <button id="btnComment">Ajouter un Commentaire</button>
+        {% endif %}
+    </div>
+
+    <!-- Modale pour la thèse -->
+    <div id="thesisModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeThesis">&times;</span>
+            <h3>Modifier Ma Thèse</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ thesis_form.as_p }}
+                <button type="submit" name="update_thesis">Enregistrer les modifications de la thèse</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale pour le compte -->
+    <div id="accountModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeAccount">&times;</span>
+            <h3>Gérer Mon Compte</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ user_form.as_p }}
+                {{ etudiant_form.as_p }}
+                <button type="submit" name="update_account">Enregistrer les modifications du compte</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale pour le mot de passe -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closePassword">&times;</span>
+            <h3>Changer Mon Mot de Passe</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ password_form.as_p }}
+                <button type="submit" name="change_password">Changer le mot de passe</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale pour ajouter un commentaire -->
+    {% if user.role == 'student' %}
+    <div id="commentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeComment">&times;</span>
+            <h3>Ajouter un Commentaire</h3>
+            <form method="post">
+                {% csrf_token %}
+                {{ commentaire_form.as_p }}
+                <button type="submit" name="ajouter_commentaire">Ajouter le Commentaire</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Obtenez les modales
+    var thesisModal = document.getElementById("thesisModal");
+    var accountModal = document.getElementById("accountModal");
+    var passwordModal = document.getElementById("passwordModal");
+    var commentModal = document.getElementById("commentModal");
+
+    // Obtenez les boutons qui ouvrent les modales
+    var btnThesis = document.getElementById("btnThesis");
+    var btnAccount = document.getElementById("btnAccount");
+    var btnPassword = document.getElementById("btnPassword");
+    var btnComment = document.getElementById("btnComment");
+
+    // Obtenez les éléments <span> qui ferment les modales
+    var closeThesis = document.getElementById("closeThesis");
+    var closeAccount = document.getElementById("closeAccount");
+    var closePassword = document.getElementById("closePassword");
+    var closeComment = document.getElementById("closeComment");
+
+    // Fonction pour ouvrir une modale
+    function openModal(modal) {
+        if (modal) {
+            modal.style.display = "block";
+        }
+    }
+
+    // Fonction pour fermer une modale
+    function closeModal(modal) {
+        if (modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // Lorsque l'utilisateur clique sur un bouton, ouvrez la modale correspondante
+    if (btnThesis) {
+        btnThesis.onclick = function() {
+            openModal(thesisModal);
+        }
+    }
+    if (btnAccount) {
+        btnAccount.onclick = function() {
+            openModal(accountModal);
+        }
+    }
+    if (btnPassword) {
+        btnPassword.onclick = function() {
+            openModal(passwordModal);
+        }
+    }
+    if (btnComment) {
+        btnComment.onclick = function() {
+            openModal(commentModal);
+        }
+    }
+
+    // Lorsque l'utilisateur clique sur <span> (x), fermez la modale correspondante
+    if (closeThesis) {
+        closeThesis.onclick = function() {
+            closeModal(thesisModal);
+        }
+    }
+    if (closeAccount) {
+        closeAccount.onclick = function() {
+            closeModal(accountModal);
+        }
+    }
+    if (closePassword) {
+        closePassword.onclick = function() {
+            closeModal(passwordModal);
+        }
+    }
+    if (closeComment) {
+        closeComment.onclick = function() {
+            closeModal(commentModal);
+        }
+    }
+
+    // Lorsque l'utilisateur clique n'importe où en dehors de la modale, fermez-la
+    window.onclick = function(event) {
+        if (event.target == thesisModal) {
+            closeModal(thesisModal);
+        } else if (event.target == accountModal) {
+            closeModal(accountModal);
+        } else if (event.target == passwordModal) {
+            closeModal(passwordModal);
+        } else if (event.target == commentModal) {
+            closeModal(commentModal);
+        }
+    }
+</script>
+</body>
+</html>
